@@ -1,25 +1,17 @@
 <x-appadmin-layout>
     <div class="container mt-4">
-
-        {{-- Flash message --}}
-        @if(session('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="h2 fw-bold">Manajemen Produk</h1>
+            <a href="{{ route('admin.products.create') }}" class="btn btn-primary">+ Tambah Produk</a>
         </div>
+
+        @if(session('success'))
+            <div class="alert alert-success">{{ session('success') }}</div>
         @endif
 
-        {{-- Header --}}
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h1>Manajemen Produk</h1>
-            <button onclick="showModal('modalTambah')" class="btn btn-primary">
-                + Tambah Produk
-            </button>
-        </div>
-
-        {{-- Tabel --}}
-        <div class="card">
-            <div class="card-body">
-                <table class="table table-bordered table-hover">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
                             <th>#</th>
@@ -28,38 +20,36 @@
                             <th>Satuan</th>
                             <th>Harga</th>
                             <th>Aksi</th>
+                            <th>Kategori</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($products as $i => $product)
+                        @forelse ($products as $key => $product)
                         <tr>
-                            <td>{{ $i + 1 }}</td>
-                            <td><code>{{ $product->kode_barang }}</code></td>
+                            <td>{{ $key + 1 }}</td>
+                            <td><span class="badge bg-light text-danger border">{{ $product->kode_barang }}</span></td>
                             <td>{{ $product->nama_barang }}</td>
-                            <td>
-                                <span class="badge bg-info text-dark">{{ $product->satuan }}</span>
-                            </td>
+                            <td><span class="badge bg-info text-dark">{{ $product->satuan }}</span></td>
                             <td>Rp {{ number_format($product->harga, 0, ',', '.') }}</td>
                             <td>
-                                <button onclick="openEdit({{ $product->id }}, '{{ $product->kode_barang }}', '{{ addslashes($product->nama_barang) }}', '{{ $product->satuan }}', '{{ $product->harga }}')"
-                                    class="btn btn-sm btn-warning">
-                                    ✏️ Edit
-                                </button>
-                                <form method="POST" action="{{ route('admin.products.destroy', $product) }}" style="display:inline;"
-                                      onsubmit="return confirm('Yakin hapus produk ini?')">
+                                <a href="{{ route('admin.products.edit', $product->id) }}" class="btn btn-warning btn-sm text-white">Edit</a>
+                                <form action="{{ route('admin.products.destroy', $product->id) }}" method="post" class="d-inline">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger">
-                                        🗑️ Hapus
-                                    </button>
+                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Hapus data ini?')">Hapus</button>
                                 </form>
+                            </td>
+                            <td>
+                                @if($product->category)
+                                    <span class="badge bg-secondary">{{ $product->category->nama_kategori }}</span>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-4">
-                                Belum ada data produk. Klik "Tambah Produk" untuk memulai.
-                            </td>
+                            <td colspan="7" class="text-center py-4 text-muted">Belum ada data produk</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -67,66 +57,4 @@
             </div>
         </div>
     </div>
-
-    {{-- Modal Tambah --}}
-    <div id="modalTambah" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;align-items:center;justify-content:center;">
-        <div style="background:white;border-radius:12px;padding:24px;width:420px;max-width:90vw;">
-            <h5 class="mb-3">📦 Tambah Produk Baru</h5>
-            <form method="POST" action="{{ route('admin.products.store') }}">
-                @csrf
-                @include('admin.products._form')
-                <div class="d-flex justify-content-end gap-2 mt-3">
-                    <button type="button" onclick="hideModal('modalTambah')" class="btn btn-secondary">Batal</button>
-                    <button type="submit" class="btn btn-primary">Simpan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    {{-- Modal Edit --}}
-    <div id="modalEdit" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;align-items:center;justify-content:center;">
-        <div style="background:white;border-radius:12px;padding:24px;width:420px;max-width:90vw;">
-            <h5 class="mb-3">✏️ Edit Produk</h5>
-            <form id="formEdit" method="POST">
-                @csrf
-                @method('PUT')
-                @include('admin.products._form')
-                <div class="d-flex justify-content-end gap-2 mt-3">
-                    <button type="button" onclick="hideModal('modalEdit')" class="btn btn-secondary">Batal</button>
-                    <button type="submit" class="btn btn-primary">Perbarui</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <script>
-    function showModal(id) {
-        document.getElementById(id).style.display = 'flex';
-    }
-    function hideModal(id) {
-        document.getElementById(id).style.display = 'none';
-    }
-    function openEdit(id, kode, nama, satuan, harga) {
-        const form = document.getElementById('formEdit');
-        form.action = '/admin/products/' + id;
-        form.querySelector('[name=kode_barang]').value = kode;
-        form.querySelector('[name=nama_barang]').value = nama;
-        form.querySelector('[name=satuan]').value = satuan;
-        form.querySelector('[name=harga]').value = harga;
-        showModal('modalEdit');
-    }
-    ['modalTambah', 'modalEdit'].forEach(id => {
-        document.getElementById(id).addEventListener('click', function(e) {
-            if (e.target === this) hideModal(id);
-        });
-    });
-    @if($errors->any())
-        @if(old('_method') === 'PUT')
-            showModal('modalEdit');
-        @else
-            showModal('modalTambah');
-        @endif
-    @endif
-    </script>
-
 </x-appadmin-layout>

@@ -11,6 +11,7 @@ class Product extends Model
         'nama_barang',
         'satuan',
         'harga',
+        'category_id',
     ];
 
     // Format harga otomatis
@@ -18,4 +19,8 @@ class Product extends Model
     {
         return 'Rp ' . number_format($this->harga, 0, ',', '.');
     }
+    public function category()
+{
+    return $this->belongsTo(Category::class);
+}                           
 }
